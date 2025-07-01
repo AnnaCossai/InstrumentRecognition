@@ -9,6 +9,7 @@ import numpy as np
 from tqdm.auto import tqdm
 import os
 import random
+from torchsummary import summary
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -86,8 +87,6 @@ torch.backends.cudnn.deterministic = True
 
 # Access the metadata
 metadata = spectrogram_dataset.metadata
-display(metadata.head())
-
 
 BATCH_SIZE = 128
 
@@ -350,6 +349,8 @@ torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 
 cnn = CNNNetwork(num_classes = 8).to(device)
+
+summary(cnn, input_size=(3, 128, 128), device=device)
 
 # Define loss function and optimizer
 loss_fn = nn.CrossEntropyLoss()
