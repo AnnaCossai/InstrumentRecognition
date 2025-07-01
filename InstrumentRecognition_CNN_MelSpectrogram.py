@@ -24,13 +24,14 @@ class SpectrogramDataset(Dataset):
         self.img_dir = img_dir
         self.transform = transform
        
-        # Create a dictionary mapping instrument_id to instrument name
-        self.id_to_instrument = dict(zip(self.metadata['instrument_id'], self.metadata['instrument']))
 
         # Map instrument_id to [0, num_classes-1]
         unique_ids = sorted(self.metadata['instrument_id'].unique())
         self.id_to_idx = {id_: idx for idx, id_ in enumerate(unique_ids)}
         self.metadata['instrument_id_mapped'] = self.metadata['instrument_id'].map(self.id_to_idx)
+
+        # Create a dictionary mapping instrument_id to instrument name
+        self.id_to_instrument = dict(zip(self.metadata['instrument_id_mapped'], self.metadata['instrument']))
 
         # Load all images into memory
         self.images = []
@@ -270,7 +271,7 @@ def train(model, data_loader, val_dataloader, loss_fn, optimizer, device, epochs
     print("\nFinished training")
     print(f"\nBest Validation Accuracy: {(100*best_val_acc):.2f}%")
 
-    os.makedirs('Plots', exist_ok=True)
+    os.makedirs('Plots_saved_model', exist_ok=True)
     
     # Plotting and saving the training and validation accuracy
     plt.figure(figsize=(12, 5))
@@ -284,8 +285,9 @@ def train(model, data_loader, val_dataloader, loss_fn, optimizer, device, epochs
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     
-    plt.savefig(f'Plots/accuracy_plot_{run_num}.png', bbox_inches='tight', dpi=300)
-    plt.savefig(f'Plots/accuracy_plot_{run_num}.pdf', bbox_inches='tight', dpi=300)
+    
+    plt.savefig(f'Plots_saved_model/accuracy_plot_{run_num}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'Plots_saved_model/accuracy_plot_{run_num}.pdf', bbox_inches='tight', dpi=300)
 
     # Plotting and saving the training and validation loss
     plt.figure(figsize=(12, 5))
@@ -299,8 +301,8 @@ def train(model, data_loader, val_dataloader, loss_fn, optimizer, device, epochs
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     
-    plt.savefig(f'Plots/loss_plot_{run_num}.png', bbox_inches='tight', dpi=300)
-    plt.savefig(f'Plots/loss_plot_{run_num}.pdf', bbox_inches='tight', dpi=300)
+    plt.savefig(f'Plots_saved_model/loss_plot_{run_num}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'Plots_saved_model/loss_plot_{run_num}.pdf', bbox_inches='tight', dpi=300)
 
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
@@ -360,6 +362,12 @@ best_model = train(cnn, train_dataloader, val_dataloader, loss_fn, optimizer, de
 test_accuracy, test_loss, prediction_list = test(best_model, test_dataloader, loss_fn, device)
 print(f"Test Loss Run {NUM_RUN}: {test_loss:.4f}, Test Accuracy Run {NUM_RUN}: {(100*test_accuracy):.2f}%")
 
+# Save the best model
+os.makedirs('models', exist_ok=True)
+model_path = f'models/best_model_{NUM_RUN}.pth'
+torch.save(best_model.state_dict(), model_path)
+print(f"Best model saved to {model_path}")
+
 # Get true labels for the test set
 true_labels = []
 for _, target, _ in test_dataloader:
@@ -378,5 +386,5 @@ plt.xticks(rotation=45)
 plt.xlabel('Predicted label', fontsize=14)
 plt.ylabel('True label', fontsize=14)
 plt.title('Confusion Matrix', fontsize=16)
-plt.savefig(f'Plots/confusion_matrix_{NUM_RUN}.png', bbox_inches='tight', dpi=300)
-plt.savefig(f'Plots/confusion_matrix_{NUM_RUN}.pdf', bbox_inches='tight', dpi=300)
+plt.savefig(f'Plots_saved_model/confusion_matrix_{NUM_RUN}.png', bbox_inches='tight', dpi=300)
+plt.savefig(f'Plots_saved_model/confusion_matrix_{NUM_RUN}.pdf', bbox_inches='tight', dpi=300)
